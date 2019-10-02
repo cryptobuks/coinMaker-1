@@ -1,6 +1,6 @@
 from account import Account
 from broker import Broker
-from feed import Feed
+from bookfeed import BookFeed
 
 sandbox = True
 if sandbox:

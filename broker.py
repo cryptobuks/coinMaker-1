@@ -1,4 +1,4 @@
-from feed import Feed
+from bookfeed import BookFeed
 
 
 class Broker():
@@ -13,7 +13,7 @@ class Broker():
         product_list = []
         for product in products:
             product_list.append(product["id"])
-        self.feed = Feed(self, self.account.sandbox, product_list, channels=["ticker"])
+        self.feed = BookFeed(self, self.account.sandbox, product_list, channels=["level2"])
 
     def notify(self, product):
         print(product)
