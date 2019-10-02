@@ -19,30 +19,35 @@ class BookFeed(WebsocketClient):
         self.should_print = False
         self.start()
 
-    def maper(self, input):
+    @staticmethod
+    def map_float(input):
         price, volume = input
         return [float(price), float(volume)]
 
     def on_message(self, msg):
         if msg["type"] == "snapshot":
             self.order_book[msg["product_id"]] = {
-                "asks": list(map(self.maper, msg["asks"])),
-                "bids": list(map(self.maper, msg["bids"])),
+                "asks": list(map(self.map_float, msg["asks"])),
+                "bids": list(map(self.map_float, msg["bids"])),
             }
         elif msg["type"] == "l2update":
             self.merge_update(self.order_book[msg["product_id"]], msg["changes"])
+            self.broker.notify(msg["product_id"])
 
     def merge_update(self, product, changes):
         for change in changes:
             price, amount = float(change[1]), float(change[2])
             l = product["asks"] if change[0] == "sell" else product["bids"]
             for index, (book_price, book_amount) in enumerate(copy.copy(l)):
-                if price == float(book_price):
-                    l[index] = self.maper(change[1:])
+                if price == float(book_price) and amount == 0:
+                    del l[index]
+                    break
+                elif price == float(book_price):
+                    l[index] = self.map_float(change[1:])
                     break
                 elif change[0] == "sell" and price < float(book_price):
-                    l.insert(index, self.maper(change[1:]))
+                    l.insert(index, self.map_float(change[1:]))
                     break
                 elif change[0] == "buy" and price > float(book_price):
-                    l.insert(index, self.maper(change[1:]))
+                    l.insert(index, self.map_float(change[1:]))
                     break

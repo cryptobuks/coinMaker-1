@@ -1,4 +1,4 @@
-from bookfeed import BookFeed
+from bookFeed import BookFeed
 
 
 class Broker():
@@ -16,7 +16,7 @@ class Broker():
         self.feed = BookFeed(self, self.account.sandbox, product_list, channels=["level2"])
 
     def notify(self, product):
-        print(product)
+        book = self.feed.order_book[product]
 
     def buy(self):
         self.account.buy()
