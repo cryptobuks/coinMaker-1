@@ -1,6 +1,8 @@
 import copy
+from statistics import mean, StatisticsError
 
 from cbpro import WebsocketClient
+from snippets.date_time import timestamp_from_date
 
 
 class BookFeed(WebsocketClient):
@@ -29,25 +31,73 @@ class BookFeed(WebsocketClient):
             self.order_book[msg["product_id"]] = {
                 "asks": list(map(self.map_float, msg["asks"])),
                 "bids": list(map(self.map_float, msg["bids"])),
+                "speed": [0, 0],
+                "amount": [0, 0],
+                "price": [0, 0],
+                "ts_buffer": [],
+                "speed_buffer": [[], []],
+                "amount_buffer": [[], []],
+                "price_buffer": [[], []]
             }
         elif msg["type"] == "l2update":
             self.merge_update(self.order_book[msg["product_id"]], msg["changes"])
+            self.calculate_speed(msg)
             self.broker.notify(msg["product_id"])
+
+    def calculate_speed(self, msg):
+        ob = self.order_book[msg["product_id"]]
+        tick_speed = {"buy": 0, "sell": 0}
+        tick_amount = {"buy": 0, "sell": 0}
+        tick_price = {"buy": 0, "sell": 0}
+        for change in msg["changes"]:
+            tick_speed[change[0]] += 1
+            tick_amount[change[0]] += float(change[2])
+            tick_price[change[0]] += float(change[1])
+        if tick_speed["buy"] > 0:
+            tick_price["buy"] /= tick_speed["buy"]
+        if tick_speed["sell"] > 0:
+            tick_price["sell"] /= tick_speed["sell"]
+        ob["ts_buffer"].append(timestamp_from_date(msg["time"]))
+        ob["speed_buffer"][0].append(tick_speed["buy"])
+        ob["speed_buffer"][1].append(tick_speed["sell"])
+        ob["amount_buffer"][0].append(tick_amount["buy"])
+        ob["amount_buffer"][1].append(tick_amount["sell"])
+        ob["price_buffer"][0].append(tick_price["buy"])
+        ob["price_buffer"][1].append(tick_price["sell"])
+        while ob["ts_buffer"][-1] - ob["ts_buffer"][0] > 60:
+            ob["ts_buffer"].pop(0)
+            ob["speed_buffer"][0].pop(0)
+            ob["speed_buffer"][1].pop(0)
+            ob["amount_buffer"][0].pop(0)
+            ob["amount_buffer"][1].pop(0)
+            ob["price_buffer"][0].pop(0)
+            ob["price_buffer"][1].pop(0)
+        ob["speed"] = [sum(ob["speed_buffer"][0]), sum(ob["speed_buffer"][1])]
+        ob["amount"] = [sum(ob["amount_buffer"][0]), sum(ob["amount_buffer"][1])]
+        try:
+            a = mean(filter(lambda i: i > 0, ob["price_buffer"][0]))
+        except StatisticsError:
+            a = 0
+        try:
+            b = mean(filter(lambda i: i > 0, ob["price_buffer"][1]))
+        except StatisticsError:
+            b = 0
+        ob["price"] = [a, b]
 
     def merge_update(self, product, changes):
         for change in changes:
             price, amount = float(change[1]), float(change[2])
-            l = product["asks"] if change[0] == "sell" else product["bids"]
-            for index, (book_price, book_amount) in enumerate(copy.copy(l)):
+            list_of_changes = product["asks"] if change[0] == "sell" else product["bids"]
+            for index, (book_price, book_amount) in enumerate(copy.copy(list_of_changes)):
                 if price == float(book_price) and amount == 0:
-                    del l[index]
+                    del list_of_changes[index]
                     break
                 elif price == float(book_price):
-                    l[index] = self.map_float(change[1:])
+                    list_of_changes[index] = self.map_float(change[1:])
                     break
                 elif change[0] == "sell" and price < float(book_price):
-                    l.insert(index, self.map_float(change[1:]))
+                    list_of_changes.insert(index, self.map_float(change[1:]))
                     break
                 elif change[0] == "buy" and price > float(book_price):
-                    l.insert(index, self.map_float(change[1:]))
+                    list_of_changes.insert(index, self.map_float(change[1:]))
                     break
