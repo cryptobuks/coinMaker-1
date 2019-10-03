@@ -4,6 +4,7 @@ import pyqtgraph as pg
 from PyQt5.QtCore import QTimer, pyqtSlot
 from PyQt5.QtWidgets import QWidget
 
+from gui.bookOverview import BookOverview
 from .templates.productWidget import Ui_Form
 
 pg.setConfigOption(u'background', u'w')
@@ -21,12 +22,13 @@ class ProductWidget(QWidget, Ui_Form):
         self.price_histogram_data = (deque([0], maxlen=120), deque([0], maxlen=120))
         self.update_timer = QTimer(self)
         self.update_timer.timeout.connect(self.update_speed_plots)
-        self.update_timer.start(5000)
+        self.update_timer.start(1000)
         self.setupUi(self)
 
     def setupUi(self, Form):
         super().setupUi(Form)
         self._init_speed_histogram()
+        self._init_marker_overview()
 
     def _init_speed_histogram(self):
         self.speed_histogram = self.graphicsView.addPlot(0, 0)
@@ -73,9 +75,11 @@ class ProductWidget(QWidget, Ui_Form):
                 self.amount_b.setData(range(len(self.amount_histogram_data[1]) + 1), self.amount_histogram_data[1])
                 self.price_a.setData(range(len(self.price_histogram_data[0]) + 1), self.price_histogram_data[0])
                 self.price_b.setData(range(len(self.price_histogram_data[1]) + 1), self.price_histogram_data[1])
+                self.book_overview_widget.slot_update()
         except KeyError:
             pass
 
-    def showEvent(self, event):
-        self.update_speed_plots()
-        super().showEvent(event)
+    def _init_marker_overview(self):
+        self.book_overview_widget = BookOverview(self.product, self.broker.order_book)
+        self.frame_overview.layout().addWidget(self.book_overview_widget)
+

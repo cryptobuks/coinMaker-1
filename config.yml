@@ -1,2 +1,2 @@
 sandbox: False
-product_list: [BTC-USD]
+product_list: [BTC-USD, BTC-EUR, ETH-BTC]
