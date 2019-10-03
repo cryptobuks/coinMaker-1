@@ -49,6 +49,7 @@ class BookFeed(WebsocketClient):
         tick_speed = {"buy": 0, "sell": 0}
         tick_amount = {"buy": 0, "sell": 0}
         tick_price = {"buy": 0, "sell": 0}
+        bs_kw = (("speed_buffer", tick_speed), ("amount_buffer", tick_amount), ("price_buffer", tick_price))
         for change in msg["changes"]:
             tick_speed[change[0]] += 1
             tick_amount[change[0]] += float(change[2])
@@ -58,28 +59,23 @@ class BookFeed(WebsocketClient):
         if tick_speed["sell"] > 0:
             tick_price["sell"] /= tick_speed["sell"]
         ob["ts_buffer"].append(timestamp_from_date(msg["time"]))
-        ob["speed_buffer"][0].append(tick_speed["buy"])
-        ob["speed_buffer"][1].append(tick_speed["sell"])
-        ob["amount_buffer"][0].append(tick_amount["buy"])
-        ob["amount_buffer"][1].append(tick_amount["sell"])
-        ob["price_buffer"][0].append(tick_price["buy"])
-        ob["price_buffer"][1].append(tick_price["sell"])
+        for kw, kv in bs_kw:
+            ob[kw][0].append(kv["buy"])
+            ob[kw][1].append(kv["sell"])
+
         while ob["ts_buffer"][-1] - ob["ts_buffer"][0] > 60:
             ob["ts_buffer"].pop(0)
-            ob["speed_buffer"][0].pop(0)
-            ob["speed_buffer"][1].pop(0)
-            ob["amount_buffer"][0].pop(0)
-            ob["amount_buffer"][1].pop(0)
-            ob["price_buffer"][0].pop(0)
-            ob["price_buffer"][1].pop(0)
-        ob["speed"] = [sum(ob["speed_buffer"][0]), sum(ob["speed_buffer"][1])]
-        ob["amount"] = [sum(ob["amount_buffer"][0]), sum(ob["amount_buffer"][1])]
+            for kw, _ in bs_kw:
+                ob[kw][0].pop(0)
+                ob[kw][1].pop(0)
+        ob["speed"] = [sum(ob["speed_buffer"][0]), -sum(ob["speed_buffer"][1])]
+        ob["amount"] = [sum(ob["amount_buffer"][0]), -sum(ob["amount_buffer"][1])]
         try:
             a = mean(filter(lambda i: i > 0, ob["price_buffer"][0]))
         except StatisticsError:
             a = 0
         try:
-            b = mean(filter(lambda i: i > 0, ob["price_buffer"][1]))
+            b = -mean(filter(lambda i: i > 0, ob["price_buffer"][1]))
         except StatisticsError:
             b = 0
         ob["price"] = [a, b]
