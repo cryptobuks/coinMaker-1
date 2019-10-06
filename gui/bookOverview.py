@@ -1,3 +1,5 @@
+import time
+
 from PyQt5.QtCore import QAbstractTableModel, Qt, QModelIndex
 from PyQt5.QtWidgets import QWidget
 

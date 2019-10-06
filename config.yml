@@ -1,2 +1,5 @@
-sandbox: False
-product_list: [BTC-USD, BTC-EUR, ETH-BTC]
+sandbox: false
+credentials_file: credentials.cfg
+product_list: [LTC-BTC, BTC-EUR, ETH-BTC, ETC-BTC, ETC-EUR, ETH-EUR, LTC-EUR]
+node_id: 0
+nodes: {}

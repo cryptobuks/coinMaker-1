@@ -12,6 +12,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self._init_product_widgets()
 
     def _init_product_widgets(self):
-        for product in self.broker.get_products():
+        for product in self.broker.products.keys():
             widget = ProductWidget(self.broker, product)
             self.tabs_products.addTab(widget, product)

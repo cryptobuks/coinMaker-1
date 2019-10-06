@@ -1,4 +1,5 @@
 import copy
+import time
 from statistics import mean, StatisticsError
 
 from cbpro import WebsocketClient
@@ -42,7 +43,7 @@ class BookFeed(WebsocketClient):
         elif msg["type"] == "l2update":
             self.merge_update(self.order_book[msg["product_id"]], msg["changes"])
             self.calculate_speed(msg)
-            self.broker.notify(msg["product_id"])
+            # self.broker.notify(msg["product_id"])
 
     def calculate_speed(self, msg):
         ob = self.order_book[msg["product_id"]]
