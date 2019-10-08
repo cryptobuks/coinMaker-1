@@ -83,10 +83,14 @@ class Broker():
             oyaml.dump(self.config, fp)
 
     def check_market(self):
+        wallet_check_count = 0
         while True:
-            a = time.time()
+            if wallet_check_count == 20:
+                self._init_wallet()
+                wallet_check_count = 0
             if not self.check_transaction_statuses():
                 self.check_possible_new_transactions()
+            wallet_check_count += 1
             time.sleep(1)
 
     def update_orders(self):
@@ -101,7 +105,7 @@ class Broker():
                 "buy": [],
                 "sell": []
             }
-            for order in self.account.get_orders(product_id=product["id"], status=["done"]):
+            for order in self.account.get_fills(product_id=product["id"]):
                 product["done_transactions"][order["side"]].append(order)
 
     def check_transaction_statuses(self):
