@@ -1,6 +1,7 @@
 import time
 
 import oyaml
+from requests import ReadTimeout
 
 from bookFeed import BookFeed
 from broker_max_amount import BrokerMaxAmount
@@ -21,7 +22,9 @@ class Account(AuthenticatedClient):
         AuthenticatedClient.__init__(self, key, secret, passphrase, api_url=api_url)
         self.t_diff = time.time() - timestamp_from_date(self.get_time()["iso"])
         self.watched_currencies = self.get_watched_currencies()
+        self._init_products()
         self.update()
+        self.update_orders()
         self._init_feed()
         self._init_brokers()
 
@@ -32,6 +35,22 @@ class Account(AuthenticatedClient):
         for broker_config in self.config["brokers"]:
             if broker_config["type"] == "max_amount":
                 self.bookers.append(BrokerMaxAmount(self, broker_config))
+
+    def _init_products(self):
+        self.products = {}
+        for product in self.get_products():
+            if product["id"] in self.config["product_list"]:
+                self.products[product["id"]] = product
+            else:
+                continue
+            product["open_transactions"] = {
+                "buy": [],
+                "sell": []
+            }
+            product["done_transactions"] = {
+                "buy": [],
+                "sell": []
+            }
 
     def time(self):
         return time.time() - self.t_diff
@@ -51,8 +70,30 @@ class Account(AuthenticatedClient):
         return watched_currencies
 
     def update(self):
-        accounts = self.get_accounts()
+        try:
+            accounts = self.get_accounts()
+        except ReadTimeout:
+            print("Account update readout timeout")
+            self.update()
+            return
+        print("Update wallet")
         for account in accounts:
             self.wallet[account["currency"]] = account
             self.wallet[account["currency"]]["in_products"] = list(
                 filter(lambda p: account["currency"] in p, list(self.config["product_list"])))
+        self.update_orders()
+
+    def update_orders(self):
+        for product in self.products.values():
+            product["open_transactions"] = {
+                "buy": [],
+                "sell": []
+            }
+            for order in self.get_orders(product_id=product["id"]):
+                product["open_transactions"][order["side"]].append(order)
+            product["done_transactions"] = {
+                "buy": [],
+                "sell": []
+            }
+            for order in self.get_fills(product_id=product["id"]):
+                product["done_transactions"][order["side"]].append(order)
