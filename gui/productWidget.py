@@ -13,8 +13,8 @@ pg.setConfigOption(u'foreground', u"k")
 
 class ProductWidget(QWidget, Ui_Form):
 
-    def __init__(self, broker, product, parent=None):
-        self.broker = broker
+    def __init__(self, account, product, parent=None):
+        self.account = account
         self.product = product
         QWidget.__init__(self)
         self.speed_histogram_data = (deque([0], maxlen=120), deque([0], maxlen=120))
@@ -59,13 +59,13 @@ class ProductWidget(QWidget, Ui_Form):
     @pyqtSlot()
     def update_speed_plots(self):
         try:
-            buy_speed, sell_speed = self.broker.order_book[self.product]["speed"]
+            buy_speed, sell_speed = self.account.feed.order_book[self.product]["speed"]
             self.speed_histogram_data[0].append(buy_speed)
             self.speed_histogram_data[1].append(sell_speed)
-            buy_amount, sell_amount = self.broker.order_book[self.product]["amount"]
+            buy_amount, sell_amount = self.account.feed.order_book[self.product]["amount"]
             self.amount_histogram_data[0].append(buy_amount)
             self.amount_histogram_data[1].append(sell_amount)
-            buy_price, sell_price = self.broker.order_book[self.product]["price"]
+            buy_price, sell_price = self.account.feed.order_book[self.product]["price"]
             self.price_histogram_data[0].append(buy_price)
             self.price_histogram_data[1].append(sell_price)
             if self.isVisible():
@@ -80,6 +80,6 @@ class ProductWidget(QWidget, Ui_Form):
             pass
 
     def _init_marker_overview(self):
-        self.book_overview_widget = BookOverview(self.product, self.broker.order_book)
+        self.book_overview_widget = BookOverview(self.product, self.account.feed.order_book)
         self.frame_overview.layout().addWidget(self.book_overview_widget)
 

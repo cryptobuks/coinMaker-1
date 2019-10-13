@@ -20,7 +20,6 @@ with open(config["credentials_file"], "r") as fp:
     key, secret, password = fp.readline().split(":")
 
 my_account = Account(key, secret, password, config)
-# broker = BrokerMaxAmount(account=my_account, config=config)
-# win = MainWindow(broker)
+# win = MainWindow(my_account)
 # win.show()
 app.exec()

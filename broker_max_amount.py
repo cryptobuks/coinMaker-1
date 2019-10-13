@@ -38,16 +38,10 @@ class BrokerMaxAmount(Broker):
                     except KeyError:
                         continue
 
-                    if new_price is not None:
-                        base, quoted = product_id.split("-")
-                        if side == "buy" and float(self.account.wallet[quoted]["available"]) <= new_price * new_amount:
-                            continue
-                        elif side == "sell" and float(self.account.wallet[base]["available"]) <= new_amount:
-                            continue
+                    if new_price is not None and self.account.has_funds(product_id, side, new_price, new_amount):
                         print(self.account.place_limit_order(product_id=product_id, side=side, price=new_price,
                                                              size=new_amount))
                         refresh = True
 
         if refresh:
-            print("from here?")
             self.account.update()
