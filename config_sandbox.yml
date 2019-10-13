@@ -4,3 +4,8 @@ product_list: [BTC-USD, BTC-EUR, BTC-GBP]
 brokers:
   - type: max_amount
     product_list: [BTC-USD, BTC-EUR, BTC-GBP]
+  - type: node
+    id: sb_0
+    amount: 0.1
+    product: BTC-USD
+    start_at: 14000

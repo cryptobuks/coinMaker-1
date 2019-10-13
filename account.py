@@ -6,6 +6,7 @@ from requests import ReadTimeout
 
 from bookFeed import BookFeed
 from broker_max_amount import BrokerMaxAmount
+from broker_node import BrokerNode
 from cbpro import AuthenticatedClient
 from snippets.date_time import timestamp_from_date
 
@@ -37,6 +38,8 @@ class Account(AuthenticatedClient):
         for broker_config in self.config["brokers"]:
             if broker_config["type"] == "max_amount":
                 self.bookers.append(BrokerMaxAmount(self, broker_config))
+            elif broker_config["type"] == "node":
+                self.bookers.append(BrokerNode(self, broker_config))
 
     def _init_products(self):
         self.products = {}

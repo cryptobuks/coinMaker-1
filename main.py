@@ -13,8 +13,8 @@ os.environ["QT_AUTO_SCREEN_SCALE_FACTOR"] = "1"
 app = QApplication(sys.argv)
 app.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling)
 
-with open("./config.yml", "r") as o:
-# with open("./config_sandbox.yml", "r") as o:
+# with open("./config.yml", "r") as o:
+with open("./config_sandbox.yml", "r") as o:
     config = yaml.load(o)
 with open(config["credentials_file"], "r") as fp:
     key, secret, password = fp.readline().split(":")

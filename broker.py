@@ -10,6 +10,7 @@ from snippets.date_time import timestamp_from_date
 
 class Broker():
     order_max_lifetime = 600
+    check_timeout = 1
 
     def __init__(self, account, config):
         self.logger = logging.getLogger("Broker")
@@ -22,7 +23,7 @@ class Broker():
         while True:
             if not self.check_transaction_statuses():
                 self.check_possible_new_transactions()
-            time.sleep(1)
+            time.sleep(self.check_timeout)
 
     def check_transaction_statuses(self):
         refresh = False
