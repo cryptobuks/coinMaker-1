@@ -2,8 +2,10 @@ sandbox: false
 credentials_file: credentials.cfg
 product_list: [LTC-BTC, BTC-EUR, ETH-BTC, ETC-BTC, ETC-EUR, ETH-EUR, LTC-EUR, LINK-ETH]
 brokers:
-  - type: max_amount
-    product_list: [LTC-BTC, BTC-EUR, ETH-BTC, ETC-BTC, ETC-EUR, ETH-EUR, LTC-EUR, LINK-ETH]
+#  - type: max_amount
+#    product_list: [LTC-BTC, BTC-EUR, ETH-BTC, ETC-BTC, ETC-EUR, ETH-EUR, LTC-EUR, LINK-ETH]
   - type: node
+    id: cb_0
+    start_at: 0.006805
     amount: 0.2
     product: LTC-BTC

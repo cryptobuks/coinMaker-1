@@ -26,6 +26,7 @@ class Account(AuthenticatedClient):
         self.t_diff = time.time() - timestamp_from_date(self.get_time()["iso"])
         self.watched_currencies = self.get_watched_currencies()
         self._init_products()
+        self.fees = self.get_fees()
         self.update()
         self._init_feed()
         self._init_brokers()
@@ -120,3 +121,6 @@ class Account(AuthenticatedClient):
         elif side == "sell" and float(self.wallet[base]["available"]) <= amount:
             return False
         return True
+
+    def get_fees(self):
+        return self._send_message('get', '/fees/')

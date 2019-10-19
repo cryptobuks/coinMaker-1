@@ -2,10 +2,15 @@ sandbox: true
 credentials_file: sandbox_credentials.cfg
 product_list: [BTC-USD, BTC-EUR, BTC-GBP]
 brokers:
-  - type: max_amount
-    product_list: [BTC-USD, BTC-EUR, BTC-GBP]
+#  - type: max_amount
+#    product_list: [BTC-USD, BTC-EUR, BTC-GBP]
   - type: node
     id: sb_0
     amount: 0.1
     product: BTC-USD
-    start_at: 14000
+    start_at: 7000
+  - type: node
+    id: sb_1
+    amount: 0.1
+    product: BTC-EUR
+    start_at: 11000

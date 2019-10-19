@@ -1,4 +1,5 @@
 import math
+import time
 
 from broker import Broker
 
@@ -21,27 +22,65 @@ class BrokerNode(Broker):
             return []
 
     def prepare_initial_transaction(self):
-        product = self.account.products[self.config["product"]]
-        decimals = int(-math.log10(float(product["quote_increment"])))
-        order = self.account.place_limit_order(product_id=self.config["product"], side="sell", price=self.config["start_at"],
-                                             size=self.config["amount"])
+        order = self.account.place_limit_order(product_id=self.config["product"], side="sell",
+                                               price=self.config["start_at"],
+                                               size=self.config["amount"])
         with open(self.node_file, "a+") as fp:
-            fp.write(order["id"]+","+order["side"]+"\r\n")
+            fp.write(order["id"] + "," + order["side"] + "\r\n")
+        self.transactions.append(order["id"] + "," + order["side"])
         self.account.update()
 
     def check_transaction_statuses(self):
-        refresh = False
-        product = self.account.products[self.config["product"]]
-        last_transaction_id, last_transaction_side = self.transactions[-1][:-1].split(",")
+        if len(self.transactions) == 0:
+            return
+        last_transaction_id, last_transaction_side = self.transactions[-1].strip().split(",")
         order = self.account.get_order(last_transaction_id)
         if "message" in order:
-            print("filled or error")
+            del self.transactions[-1]
+            if len(self.transactions) == 0:
+                self.prepare_initial_transaction()
         elif order["status"] == "open":
-            print("pasing")
-            return
-        if refresh:
-            self.account.update()
-        return refresh
+            return False
+        elif order["status"] == "done":
+            self.check_possible_new_transactions(order)
 
-    def check_possible_new_transactions(self):
-        print("check")
+    def check_market(self):
+        while True:
+            self.check_transaction_statuses()
+            time.sleep(self.check_timeout)
+
+    def check_possible_new_transactions(self, last_order):
+        new_transaction_side = "buy"
+        look_at = "bids"
+        if last_order["side"] == "buy":
+            new_transaction_side = "sell"
+            look_at = "asks"
+        product = self.account.products[self.config["product"]]
+        decimals = int(-math.log10(float(product["quote_increment"])))
+        base_decimals = int(-math.log10(float(product["base_increment"])))
+        try:
+            orders = self.account.feed.order_book[self.config["product"]][look_at]
+        except KeyError:
+            print("Key error {}".format(self.config["product"]))
+            return
+
+        fee = float(last_order["fill_fees"])
+        new_price = orders[0][0]
+        if len(orders) >= 2:
+            new_price = (orders[0][0] + orders[1][0]) / 2
+
+        if last_order["side"] == "buy" and new_price <= float(last_order["price"]):
+            return
+        elif last_order["side"] == "sell" and new_price >= float(last_order["price"]):
+            return
+
+        new_price = round(new_price, decimals)
+        new_amount = round((float(last_order["executed_value"]) - fee) / new_price, decimals) * (
+                    1 - float(self.account.fees["maker_fee_rate"]))
+        order = self.account.place_limit_order(product_id=self.config["product"], side=new_transaction_side,
+                                               price=round(new_price, decimals),
+                                               size=new_amount)
+        print("New order", order)
+        with open(self.node_file, "a+") as fp:
+            fp.write(order["id"] + "," + order["side"] + "\r\n")
+        self.transactions.append(order["id"] + "," + order["side"])
