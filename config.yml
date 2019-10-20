@@ -9,3 +9,18 @@ brokers:
     start_at: 0.006805
     amount: 0.2
     product: LTC-BTC
+  - type: node
+    id: cb_1
+    start_at: 0.000555
+    amount: 1
+    product: ETC-BTC
+  - type: node
+    id: cb_2
+    start_at: 0.01369177
+    amount: 1
+    product: LINK-ETH
+  - type: node
+    id: cb_3
+    start_at: 0.02154
+    amount: 0.1
+    product: ETH-BTC

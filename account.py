@@ -88,7 +88,6 @@ class Account(AuthenticatedClient):
             print("Account update readout timeout")
             self.update()
             return
-        print("Update wallet")
         for account in accounts:
             self.wallet[account["currency"]] = account
             self.wallet[account["currency"]]["in_products"] = list(
